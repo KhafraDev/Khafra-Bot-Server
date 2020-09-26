@@ -10,8 +10,12 @@
   "author": "Khafra",
   "license": "MIT",
   "dependencies": {
+    "@types/mime": "^2.0.3",
+    "@types/mime-types": "^2.1.0",
+    "@types/node-fetch": "^2.5.7",
     "express": "^4.17.1",
     "gm": "^1.23.1",
+    "mime-types": "^2.1.27",
     "node-fetch": "^2.6.1"
   },
   "devDependencies": {
