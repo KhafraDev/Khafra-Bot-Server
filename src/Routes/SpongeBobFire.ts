@@ -1,13 +1,12 @@
 import { Request, Response } from "express";
-import gm from 'gm';
-import { createReadStream } from 'fs';
-import { join, resolve } from 'path';
+import sharp from 'sharp';
+import { readFileSync } from 'fs';
 import { wordwrap } from '../Utility/wordwrap';
 import { ErrorCode } from "../Utility/Errors";
 
-const template = join(resolve('.'), 'src/templates'); // template directory
+const buffer = readFileSync('./src/templates/spongebob-fire.jpg');
 
-export const SpongeBobFire = (req: Request, res: Response) => {
+export const SpongeBobFire = async (req: Request, res: Response) => {
     if(!('q' in req.query) || req.query.q.length === 0) {
         return res.status(400).send({
             error: 'Missing "q" param.',
@@ -15,20 +14,30 @@ export const SpongeBobFire = (req: Request, res: Response) => {
         });
     }
 
-    const Image = gm(createReadStream(join(template, 'spongebob-fire.jpg')))
-        .fill('#000000')
-        .font('Arial', 50)
-        .drawText(150, 200, wordwrap(req.query.q as string, 14, 18));
+    const split = wordwrap(req.query.q as string, 18, 22).split('\n').slice(1);
+    const tspan = split.map(s => `<tspan x="0" dy="1.2em">${s}</tspan>`);
 
-    Image.toBuffer('jpg', (err, img) => {
-        if(err) {
-            return res.status(500).send({
-                error: err.toString(),
-                code: ErrorCode.SERVER_ERROR
-            });
-        }
+    // debugging element:
+    // <rect width="100%" height="100%" fill="blue"/>
+    const svg = Buffer.from(`
+        <svg width="1440" height="1666" viewBox="0 0 1440 1666">
+            <svg x="133" y="-425" width="29%" viewBox="0 0 75 95">
+                <text font-size=".65em" font-family="Arial">
+                ${tspan.join('\n')}
+                </text>
+            </svg>
+        </svg>
+    `);
 
-        res.set('Content-Type', 'image/jpeg');
-        return res.status(200).send(img);
-    });
+    const Image = await sharp(buffer)
+        .composite([
+            {
+                input: svg,
+                gravity: 'northwest'
+            }
+        ])
+        .toBuffer();
+
+    res.set('Content-Type', 'image/jpeg');
+    return res.status(200).send(Image);
 }
