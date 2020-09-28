@@ -5,9 +5,9 @@ import { join, resolve } from 'path';
 import { ErrorCode } from "../Utility/Errors";
 import { parse } from "url";
 
-const template = join(resolve('.'), 'src/templates/challenge.jpg'); // meme template
+const template = join(resolve('.'), 'src/templates/ifunny-watermark.png'); // meme template
 
-export const Challenge = async (req: Request, res: Response) => {
+export const iFunny = async (req: Request, res: Response) => {
     if(!('url' in req.query) || req.query.url.length === 0) {
         return res.status(400).send({
             error: 'Missing "url" param.',
@@ -45,26 +45,32 @@ export const Challenge = async (req: Request, res: Response) => {
     }
 
     const buffer = await resp.buffer();
-    const discord = sharp(buffer);
-    const size = await discord.metadata();
-
-    let resized: Buffer;
-    if(size.width > 498 || size.height > 483 * .65) {
-        resized = await discord.resize(
-            size.width > 498 ? 400 : size.width,
-            size.height > 483 * .65 ? 375 : size.height
-        ).toBuffer();
-    } else {
-        resized = buffer;
-    }
-
-    const Image = await sharp(template)
-        .composite([{
+    const downSize = await sharp(buffer).metadata();
+    
+    const resized = await sharp(template).resize({ 
+        width: downSize.width
+    }).toBuffer();
+            
+    const Image = await sharp({
+        create: {
+            width: downSize.width,
+            height: downSize.height + 16,
+            channels: 4,
+            background: { r: 255, g: 255, b: 255, alpha: 1 }
+        }
+    })
+    .jpeg() // must be here or won't work
+    .composite([
+        {
+            input: buffer,
+            gravity: 'north'
+        },
+        {
             input: resized,
-            gravity: size.height > 250 ? 'south' : 'center'
-        }])
-        .jpeg()
-        .toBuffer();
+            gravity: 'south'
+        }
+    ])
+    .toBuffer();
 
     res.set('Content-Type', 'image/jpeg');
     return res.status(200).send(Image);
