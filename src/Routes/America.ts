@@ -6,9 +6,9 @@ import { ErrorCode } from "../Utility/Errors";
 import { parse } from "url";
 import { isImage, Valid } from "../Utility/Image/is";
 
-const template = join(resolve('.'), 'src/templates/challenge.jpg'); // meme template
+const template = join(resolve('.'), 'src/templates/america.jpg'); // meme template
 
-export const Challenge = async (req: Request, res: Response) => {
+export const America = async (req: Request, res: Response) => {
     if(!('url' in req.query) || req.query.url.length === 0) {
         return res.status(400).send({
             error: 'Missing "url" param.',
@@ -46,26 +46,22 @@ export const Challenge = async (req: Request, res: Response) => {
     }
 
     const buffer = await resp.buffer();
-    const discord = sharp(buffer);
-    const size = await discord.metadata();
-
-    let resized: Buffer;
-    if(size.width > 498 || size.height > 483 * .65) {
-        resized = await discord.resize(
-            size.width > 498 ? 400 : size.width,
-            size.height > 483 * .65 ? 375 : size.height
-        ).toBuffer();
-    } else {
-        resized = buffer;
-    }
-
-    const Image = await sharp(template)
-        .composite([{
-            input: resized,
-            gravity: size.height > 250 ? 'south' : 'center'
-        }])
+    const downSize = await sharp(buffer).metadata();
+    
+    const resized = await sharp(template).resize({ 
+        height: downSize.height,
+        width: downSize.width
+    }).toBuffer();
+            
+    const Image = await sharp(buffer)
+        .composite([
+            {
+                input: resized,
+                blend: 'soft-light' // soft-light, overlay, darken?, exclusion?, lighten?, multiply?, screen?
+            }
+        ])
         .jpeg()
-        .toBuffer();
+        .toBuffer()
 
     res.set('Content-Type', 'image/jpeg');
     return res.status(200).send(Image);

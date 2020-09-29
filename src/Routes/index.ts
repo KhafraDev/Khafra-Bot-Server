@@ -1,9 +1,15 @@
 import { SpongeBobFire } from './SpongeBobFire';
 import { Challenge } from './Challenge';
 import { iFunny } from './iFunny';
+import { America } from './America';
+import { Achievement } from './Achievement';
+import { Piper } from './Piper';
 
-export {
-    SpongeBobFire,
+export const Routes = {
+    Achievement,
+    America,
     Challenge,
-    iFunny
+    iFunny,
+    Piper,
+    SpongeBobFire
 }

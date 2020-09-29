@@ -4,6 +4,7 @@ import fetch from 'node-fetch';
 import { join, resolve } from 'path';
 import { ErrorCode } from "../Utility/Errors";
 import { parse } from "url";
+import { isImage, Valid } from "../Utility/Image/is";
 
 const template = join(resolve('.'), 'src/templates/ifunny-watermark.png'); // meme template
 
@@ -37,9 +38,9 @@ export const iFunny = async (req: Request, res: Response) => {
     }
 
     const contentType = resp.headers.get('content-type');
-    if(!['image/png', 'image/jpeg'].includes(contentType)) {
+    if(!isImage(contentType)) {
         return res.status(400).send({
-            error: 'Only PNG and JPG are accepted.',
+            error: `Only ${Valid.join(', ')} images are allowed!`,
             code: ErrorCode.CONTENT_TYPE
         });
     }
